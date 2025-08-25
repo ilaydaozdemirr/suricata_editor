@@ -5,116 +5,77 @@ import { generateRuleString } from '../utils/ruleGenerator';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'react-toastify';
 
-const createNewSession = () => ({
-    id: uuidv4(),
-    status: 'editing',
+const createNewEditorState = () => ({
+    id: null, // Düzenlenen kuralın ID'si. null ise yeni kural demektir.
     headerData: { 'Action': '', 'Protocol': '', 'Source IP': '', 'Source Port': '', 'Direction': '', 'Destination IP': '', 'Destination Port': '' },
     ruleOptions: [],
-    ruleString: ''
 });
 
 const RuleContext = createContext();
 export const useRule = () => useContext(RuleContext);
 
 export const RuleProvider = ({ children }) => {
-    const [ruleSessions, setRuleSessions] = useState(() => {
-        try {
-            const savedSessions = localStorage.getItem('suricataRuleSessions');
-            if (savedSessions) {
-                const parsed = JSON.parse(savedSessions);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    return parsed;
-                }
-            }
-        } catch (error) {
-            console.error("Kaydedilmiş kurallar okunurken bir hata oluştu:", error);
-        }
-        return [createNewSession()];
+    const [completedRules, setCompletedRules] = useState(() => {
+        const saved = localStorage.getItem('suricataCompletedRules');
+        return saved ? JSON.parse(saved) : [];
     });
-    
-    const [editingSessionId, setEditingSessionId] = useState(null);
+
+    const [activeEditorState, setActiveEditorState] = useState(createNewEditorState());
 
     useEffect(() => {
-        localStorage.setItem('suricataRuleSessions', JSON.stringify(ruleSessions));
-    }, [ruleSessions]);
+        localStorage.setItem('suricataCompletedRules', JSON.stringify(completedRules));
+    }, [completedRules]);
 
-    const updateHeaderData = (sessionId, newHeaderData) => {
-        setRuleSessions(prev => prev.map(s => s.id === sessionId ? { ...s, headerData: newHeaderData } : s));
+    const loadRuleIntoEditor = (rule) => {
+        setActiveEditorState({
+            id: rule.id,
+            headerData: rule.headerData,
+            ruleOptions: rule.ruleOptions,
+        });
+        toast.info(`Kural düzenlenmek üzere editöre yüklendi.`);
     };
 
-    const updateRuleOptions = (sessionId, newRuleOptions) => {
-        setRuleSessions(prev => prev.map(s => s.id === sessionId ? { ...s, ruleOptions: newRuleOptions } : s));
-    };
-    
-    const startEditingRule = (sessionId) => {
-        setRuleSessions(prev =>
-            prev
-                .filter(s => {
-                    const isNewAndEmpty = s.status === 'editing' && s.ruleOptions.length === 0 && s.headerData.Action === '';
-                    return !isNewAndEmpty;
-                })
-                .map(s => ({
-                    ...s,
-                    status: s.id === sessionId ? 'editing' : 'finalized'
-                }))
-        );
+    const clearEditor = () => {
+        setActiveEditorState(createNewEditorState());
     };
     
-    const finalizeRule = (sessionId) => {
-        const sessionToFinalize = ruleSessions.find(s => s.id === sessionId);
-        if (!sessionToFinalize) return;
-
-        if (!sessionToFinalize.ruleOptions.some(o => o.keyword === 'msg') || !sessionToFinalize.ruleOptions.some(o => o.keyword === 'sid')) {
+    const saveOrUpdateRule = () => {
+        if (!activeEditorState.ruleOptions.some(o => o.keyword === 'msg') || !activeEditorState.ruleOptions.some(o => o.keyword === 'sid')) {
             toast.error('Lütfen kurala en azından "msg" ve "sid" seçeneklerini ekleyin.');
             return;
         }
+
+        const finalRuleString = generateRuleString(activeEditorState.headerData, activeEditorState.ruleOptions);
         
-        const finalRuleString = generateRuleString(sessionToFinalize.headerData, sessionToFinalize.ruleOptions);
+        const ruleData = {
+            headerData: activeEditorState.headerData,
+            ruleOptions: activeEditorState.ruleOptions,
+            ruleString: finalRuleString,
+        };
 
-        setRuleSessions(prev => [
-            ...prev.map(s => 
-                s.id === sessionId 
-                    ? { ...s, status: 'finalized', ruleString: finalRuleString } 
-                    : s
-            ),
-            createNewSession()
-        ]);
-        toast.success('Kural başarıyla kaydedildi/güncellendi!');
-    };
-
-    const deleteRule = (sessionId) => {
-        if (ruleSessions.length <= 1) {
-            setRuleSessions([createNewSession()]);
-        } else {
-            setRuleSessions(prev => prev.filter(session => session.id !== sessionId));
+        if (activeEditorState.id) { // Mevcut kuralı GÜNCELLE
+            setCompletedRules(prev => prev.map(r => r.id === activeEditorState.id ? { ...r, ...ruleData } : r));
+            toast.success('Kural başarıyla güncellendi!');
+        } else { // YENİ kuralı KAYDET (Listenin başına ekle)
+            setCompletedRules(prev => [{ ...ruleData, id: uuidv4() }, ...prev]);
+            toast.success('Kural başarıyla kaydedildi!');
         }
-        toast.info('Kural silindi.');
+        clearEditor(); // İşlem bitince editörü temizle.
     };
-    
-    // TAMAMEN YENİLENMİŞ duplicateRule FONKSİYONU
-    const duplicateRule = (sessionToDuplicate) => {
-        setRuleSessions(prev => [
-            // 1. Mevcut listeden, o anki boş editörü ('editing' durumunda olanı) çıkar.
-            ...prev.filter(s => s.status === 'finalized'),
-            // 2. En sona, kopyalanan kuralın verileriyle yeni bir 'editing' oturumu ekle.
-            {
-                ...sessionToDuplicate,
-                id: uuidv4(),
-                status: 'editing',
-                ruleString: '',
-            }
-        ]);
-        toast.info('Kural çoğaltıldı ve yeni editöre yüklendi.');
+
+    const deleteRule = (ruleId) => {
+        setCompletedRules(prev => prev.filter(r => r.id !== ruleId));
+        toast.info('Kural silindi.');
     };
 
     const value = {
-        ruleSessions,
-        updateHeaderData,
-        updateRuleOptions,
-        finalizeRule,
+        completedRules,
+        activeEditorState,
+        setActiveEditorState,
+        loadRuleIntoEditor,
+        clearEditor,
+        saveOrUpdateRule,
         deleteRule,
-        duplicateRule,
-        startEditingRule,
     };
 
     return (

@@ -1,42 +1,33 @@
 // src/components/OptionsBuilder.js
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRule } from '../context/RuleContext';
 import OptionRow from './OptionRow';
-import AddOption from './AddOption';
+import EditorActions from './EditorActions';
+import { optionsDictionary } from '../data/optionsDictionary';
 
-const OptionsBuilder = ({ session, onNavigateBack }) => {
-    const { updateRuleOptions } = useRule();
+
+const OptionsBuilder = () => {
+    const { activeEditorState, setActiveEditorState } = useRule();
+    const { ruleOptions } = activeEditorState;
     
     const [editingIndex, setEditingIndex] = useState(null);
-    const addOptionInputRef = useRef(null);
-    
+
+    // Yeni bir option kütüphaneden eklendiğinde, düzenleme modunu başlat
     useEffect(() => {
-        if (editingIndex === null) {
-            setTimeout(() => {
-                addOptionInputRef.current?.focus();
-            }, 0);
-        }
-    }, [editingIndex]);
-    
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (e.key === 'Escape') {
-                onNavigateBack();
+        if(ruleOptions.length > 0) {
+            const lastOption = ruleOptions[ruleOptions.length - 1];
+            if (optionsDictionary[lastOption.keyword]?.inputType !== 'flag') {
+                setEditingIndex(ruleOptions.length - 1);
+            } else {
+                setEditingIndex(null);
             }
-        };
-
-        document.addEventListener('keydown', handleKeyDown);
-
-        return () => {
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [onNavigateBack]);
-
+        }
+    }, [ruleOptions]);
+    
     const handleValueChange = (index, newValue) => {
-        const updatedOptions = [...session.ruleOptions];
+        const updatedOptions = [...ruleOptions];
         const targetOption = updatedOptions[index];
-
         if (targetOption) {
             if (typeof newValue === 'object' && newValue !== null) {
                 targetOption.value = newValue.value;
@@ -44,21 +35,8 @@ const OptionsBuilder = ({ session, onNavigateBack }) => {
             } else {
                 targetOption.value = newValue;
             }
-            updateRuleOptions(session.id, updatedOptions);
+            setActiveEditorState(prev => ({...prev, ruleOptions: updatedOptions}));
         }
-    };
-
-    const handleDeleteLastOption = () => {
-        if (session.ruleOptions.length > 0) {
-            const newRuleOptions = session.ruleOptions.slice(0, -1);
-            updateRuleOptions(session.id, newRuleOptions);
-        }
-    };
-    
-    const handleAddOption = (newOption) => { 
-        const newRuleOptions = [...session.ruleOptions, newOption];
-        updateRuleOptions(session.id, newRuleOptions);
-        setEditingIndex(newRuleOptions.length - 1);
     };
     
     const handleStopEditing = () => { 
@@ -67,9 +45,8 @@ const OptionsBuilder = ({ session, onNavigateBack }) => {
     
     return (
         <div className="options-builder">
-            {/* Header'a Geri Dön Butonu ve toolbar'ı buradan kaldırıldı */}
             <div className="added-options-list">
-                {session.ruleOptions.map((option, index) => (
+                {ruleOptions.map((option, index) => (
                     <OptionRow 
                         key={option.id}
                         option={option} 
@@ -80,12 +57,7 @@ const OptionsBuilder = ({ session, onNavigateBack }) => {
                     />
                 ))}
             </div>
-            <AddOption 
-                ref={addOptionInputRef} 
-                onOptionAdd={handleAddOption} 
-                onDeleteLastOption={handleDeleteLastOption} 
-                session={session}
-            />
+            <EditorActions />
         </div>
     );
 };

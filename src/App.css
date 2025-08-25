@@ -1,404 +1,83 @@
-/* BU KOD BLOĞUNUN TAMAMINI src/App.css DOSYASINA YAPIŞTİR */
-
-/* Genel Stiller ve Renk Paleti */
+/* src/App.css */
 :root {
-  --text-color: #ffffff;
-  --border-color: #333333;
-  --input-background: #000000;
-  --label-color: #aaaaaa;
-  --accent-color: #cccccc;
-  --suggestion-hover-bg: #2a2d2e;
-  --keyword-color: #c586c0; /* Morumsu renk */
-  --value-color: #ce9178; /* Turuncumsu renk */
+  --text-color: #ffffff; --border-color: #333333; --input-background: #000000;
+  --label-color: #aaaaaa; --accent-color: #cccccc; --suggestion-hover-bg: #2a2d2e;
+  --keyword-color: #c586c0; --value-color: #ce9178; --background-primary: #1e1e1e;
+  --background-secondary: #252526;
 }
+body { background-color: #000; color: var(--text-color); font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; }
+.ide-container { height: 100vh; width: 100vw; background-color: #121212; }
+.resize-handle { background-color: #000; }
+.resize-handle[data-orientation="vertical"]{ height: 5px; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); cursor: ns-resize; }
+.resize-handle[data-orientation="horizontal"]{ width: 5px; border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); cursor: ew-resize; }
+.resize-handle:hover{ background-color: var(--accent-color); }
+.panel-content { display: flex; flex-direction: column; height: 100%; width: 100%; overflow: hidden; background-color: var(--background-primary); box-sizing: border-box; }
 
-html {
-  scroll-padding-bottom: 20vh;
-  scroll-behavior: smooth;
-}
+/* --- Aktif Editör Paneli --- */
+.editor-row { display: flex; align-items: flex-end; gap: 1rem; width: 100%; padding: 1rem; box-sizing: border-box; }
+.input-group { display: flex; flex-direction: column; flex: 1; min-width: 80px; position: relative; }
+.input-group label { color: var(--label-color); font-size: 0.8rem; margin-bottom: 0.5rem; text-transform: uppercase; }
+.input-group input { background-color: var(--input-background); border: 1px solid var(--border-color); color: var(--text-color); padding: 0.5rem 0.75rem; border-radius: 4px; font-size: 1rem; font-family: 'Consolas', monospace; text-align: center; }
+.input-group input:focus { outline: none; border-color: var(--accent-color); }
+.options-view-container { width: 100%; height: 100%; display: flex; flex-direction: column; font-family: 'Consolas', monospace; box-sizing: border-box; }
+.options-view-header { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 1rem; border-bottom: 1px solid var(--border-color); }
+.final-header-text { font-size: 1.2rem; color: #569cd6; white-space: pre-wrap; margin: 0; }
+.back-to-header-btn { background: none; border: none; color: var(--label-color); cursor: pointer; font-size: 0.9rem; }
+.back-to-header-btn:hover { color: var(--text-color); }
+.options-builder { flex-grow: 1; display: flex; flex-direction: column; padding: 1rem; overflow: hidden; }
+.added-options-list { flex-grow: 1; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 4px; padding: 0.5rem; background-color: var(--input-background); min-height: 150px; }
+.editor-actions { display: flex; justify-content: flex-end; gap: 1rem; padding-top: 1rem; margin-top: auto; border-top: 1px solid var(--border-color); }
+.action-button { padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: 600; border: 1px solid var(--border-color); }
+.cancel-button { background-color: #3e2121; border-color: #8b3636; color: #ff8a8a; }
+.cancel-button:hover { background-color: #8b3636; color: var(--text-color); }
+.save-button { background-color: #0c2d1c; border-color: #1a5333; color: #61e29f; }
+.save-button:hover { background-color: #1a5333; color: var(--text-color); }
+.suggestions-list { position: absolute; top: 100%; left: 0; right: 0; z-index: 10; background-color: var(--input-background); border: 1px solid var(--border-color); border-radius: 0 0 4px 4px; list-style: none; margin: 0; padding: 0; max-height: 200px; overflow-y: auto; }
+.suggestions-list li { padding: .75rem; cursor: pointer; }
+.suggestions-list li:hover { background-color: var(--suggestion-hover-bg); }
 
-body {
-  background-color: #000000;
-  color: var(--text-color);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  margin: 0;
-}
+/* --- Kütüphane Paneli --- */
+.option-library-panel { padding: 1rem; }
+.option-library-panel h4 { margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+.library-list { height: calc(100% - 40px); overflow-y: auto; }
+.library-category-header { font-weight: bold; color: var(--label-color); margin-top: 1rem; font-size: 0.9rem; padding: 0.2rem; }
+.library-item { padding: 0.5rem; cursor: pointer; border-radius: 3px; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
+.library-item:hover { background-color: var(--suggestion-hover-bg); }
+.library-item-keyword { color: var(--keyword-color); font-weight: bold; }
+.library-item-desc { color: #888; text-align: right; }
+.empty-list-message { color: #888; padding: 1rem; text-align: center; font-style: italic; }
 
-/* --- KONSOL YERLEŞİMİ VE TOOLBAR --- */
-.workbench-console-container {
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 2rem;
-  box-sizing: border-box;
-}
+/* --- Kural Listesi Paneli --- */
+.rule-list-panel { padding: 1rem; }
+.rule-list-panel h4 { margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+.rule-list-items { height: calc(100% - 40px); overflow-y: auto; }
+.rule-list-item { display: flex; align-items: center; padding: 0.5rem; border-bottom: 1px solid var(--border-color); }
+.rule-item-actions { display: flex; gap: 0.5rem; margin-right: 1rem; }
+.rule-item-actions button { background: var(--background-secondary); border: 1px solid var(--border-color); color: var(--label-color); cursor: pointer; border-radius: 3px; padding: 0.2rem 0.4rem; }
+.rule-item-actions button:hover { background-color: var(--suggestion-hover-bg); color: var(--text-color); }
+.rule-item-string { flex-grow: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; cursor: default; }
 
-.workbench-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-bottom: 2rem;
-  height: 30px;
-}
-
-.toolbar-button {
-  background-color: #2a2d2e;
-  color: var(--label-color);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.toolbar-button:hover {
-  background-color: #3c3c3c;
-  color: var(--text-color);
-  border-color: var(--accent-color);
-}
-
-.active-editor-wrapper {
-  min-height: 350px;
-  margin-bottom : 1.5rem;
-  border: 1px solid var(--accent-color);
-  border-radius: 4px;
-  padding: 1rem;
-  box-sizing: border-box;
-
-}
-
-
-/* --- TAMAMLANMIŞ KURAL GÖSTERİMİ --- */
-.finalized-rule-container {
-  background-color: #0a0a0a;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  padding: 0; 
-  margin-bottom: 1.5rem;
-  position: relative;
-  transition: all 0.2s ease-in-out;
-}
-
-.rule-actions {
-  position: absolute;
-  top: -10px;
-  left: 15px;
-  display: flex;
-  gap: 0.5rem;
-  z-index: 20;
-}
-
-.rule-action-btn {
-  background-color: #2a2d2e;
-  color: var(--label-color);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.rule-action-btn:hover {
-  background-color: #3c3c3c;
-  color: var(--text-color);
-  border-color: var(--accent-color);
-}
-
-.finalized-rule-container.is-editing {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 10px rgba(204, 204, 204, 0.2);
-}
-
-
-/* --- AKTİF EDİTÖR --- */
-.options-view-container {
-  width: 100%;
-  font-family: 'Consolas', 'Courier New', monospace;
-  box-sizing: border-box;
-}
-
-/* Akordiyon Animasyonu */
-.editor-expander {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.5s ease-in-out;
-}
-
-.editor-expander.expanded {
-  max-height: 1000px; 
-}
-
-/* --- HEADER EDİTÖRÜ --- */
-.editor-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 1rem;
-  width: 100%;
-}
-
-.input-group {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 100px;
-  position: relative;
-}
-
-.input-group label {
-  color: var(--label-color);
-  font-size: 0.8rem;
-  margin-bottom: 0.5rem;
-  text-transform: uppercase;
-}
-
-.input-group input {
-  background-color: var(--input-background);
-  border: 1px solid var(--border-color);
-  color: var(--text-color);
-  /* DEĞİŞİKLİK: Dikey padding azaltıldı, yatay padding korundu */
-  padding: 0.5rem 0.75rem; 
-  border-radius: 4px;
-  font-size: 1.1rem;
-  font-family: 'Consolas', 'Courier New', monospace;
-  text-align: center;
-}
-
-.input-group input:focus {
-  outline: none;
-  border-color: var(--accent-color);
-}
-
-.final-header-text {
-  font-size: 1.2rem;
-  color: #569cd6;
-  white-space: pre-wrap;
-  word-break: break-all;
-  margin: 0;
-  padding: 0 0.5rem;
-}
-
-/* --- OPTIONS EDİTÖRÜ --- */
-.options-builder {
-  background-color: var(--input-background);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  padding: 1rem;
-  margin: 5px 0;
-  min-height: 200px;
-  display: flex;
-  flex-direction: column;
-}
-
-.added-options-list {
-  flex-grow: 1;
-}
-
-.option-row {
-  display: flex;
-  align-items: center;
-  padding: 0.25rem 0.5rem;
-  font-size: 1.1rem;
-  cursor: text;
-  border-radius: 3px;
-  margin: 2px 0;
-}
-
-.option-row:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-.option-keyword {
-  color: var(--keyword-color);
-  margin-right: 0.5rem;
-}
-
-.option-value {
-  color: var(--value-color);
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.option-semicolon {
-  color: var(--text-color);
-  margin-left: 0.25rem;
-}
-
-.option-group-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.25rem 0.75rem;
-  padding: 0.25rem 0.5rem;
-  font-size: 1.1rem;
-  cursor: text;
-  border-radius: 3px;
-  margin: 2px 0;
-}
-
-.option-group-row:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-.option-group-item {
-  display: flex;
-  align-items: center;
-}
-
-/* --- CONTENT EDİTÖRÜ (STABİL VERSİYON) --- */
-.option-row-editing-card {
-  width: 100%;
-  background-color: #1e1e1e;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  padding: 1rem;
-  margin: 0.5rem 0;
-  box-sizing: border-box;
-}
-
-.content-value-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.modifiers-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  padding: 1rem;
-  border-top: 1px solid var(--border-color);
-  margin-bottom: 0.5rem;
-}
-
-.modifier-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.modifier-item label {
-  color: var(--label-color);
-}
-
-.modifier-item input[type="checkbox"] {
-  cursor: pointer;
-}
-
-.modifier-item input[type="number"] {
-  background-color: transparent;
-  color: var(--value-color);
-  border: none;
-  border-bottom: 1px solid var(--border-color);
-  border-radius: 0;
-  padding: 0.25rem;
-  width: 80px;
-  text-align: center;
-  transition: border-color 0.2s ease;
-  -moz-appearance: textfield;
-}
-
-.modifier-item input[type="number"]:focus {
-  outline: none;
-  border-bottom-color: var(--accent-color);
-}
-
-.modifier-item input[type="number"]::-webkit-outer-spin-button,
-.modifier-item input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-
-/* --- PAYLAŞILAN / YARDIMCI STİLLER --- */
-.suggestions-list, .add-option-list {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  z-index: 10;
-  background-color: var(--input-background);
-  border: 1px solid var(--border-color);
-  border-radius: 0 0 4px 4px;
-  list-style: none;
-  margin: 5px 0 0 0;
-  padding: 0;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.suggestions-list li, .add-option-list li {
-  font-size: 1.1rem;
-  color: var(--text-color);
-  padding: .75rem;
-  cursor: pointer;
-  transition: background-color .2s ease;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.suggestions-list li:last-child, .add-option-list li:last-child {
-  border-bottom: none;
-}
-
-.suggestions-list li:hover, .add-option-list li:hover {
-  background-color: var(--suggestion-hover-bg);
-}
-
-.add-option-container {
-  position: relative;
-}
-
-.add-option-search {
-  width: 100%;
-  background-color: transparent;
-  border: none;
-  border-top: 1px dashed var(--border-color);
-  color: var(--text-color);
-  padding: 0.75rem 0.5rem;
-  margin-top: 0.5rem;
-  font-size: 1rem;
-  font-family: inherit;
-  box-sizing: border-box;
-}
-
-.add-option-search:focus {
-  outline: none;
-  border-top-style: solid;
-  border-top-color: var(--accent-color);
-}
-
-.option-description {
-  color: var(--label-color);
-  font-size: 0.9rem;
-  margin-left: 1rem;
-}
-
-.option-value-input {
-  flex-grow: 1;
-  background-color: transparent;
-  border: none;
-  color: var(--value-color);
-  font-family: inherit;
-  font-size: inherit;
-  padding: 0;
-  margin: 0;
-  border-bottom: 1px solid var(--accent-color);
-}
-
-.option-value-input:focus {
-  outline: none;
-}
-
-.autocomplete-container {
-  position: relative;
-  flex-grow: 1;
-}
+/* --- Diğer Bileşen Stilleri (OptionRow, ContentEditor vb.) --- */
+.option-row { display: flex; align-items: center; padding: 0.25rem 0.5rem; font-size: 1rem; cursor: pointer; border-radius: 3px; margin: 2px 0; }
+.option-row:hover { background-color: rgba(255, 255, 255, 0.05); }
+.option-keyword { color: var(--keyword-color); margin-right: 0.5rem; }
+.option-value { color: var(--value-color); }
+.option-semicolon { color: var(--text-color); margin-left: 0.25rem; }
+.option-group-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.75rem; padding: 0.25rem 0.5rem; cursor: pointer; }
+.option-group-item { display: flex; align-items: center; }
+.option-value-input { flex-grow: 1; background-color: transparent; border: none; color: var(--value-color); font-family: inherit; font-size: inherit; padding: 0; margin: 0; border-bottom: 1px solid var(--accent-color); }
+.option-value-input:focus { outline: none; }
+.content-editor-container { padding: 1rem; margin: 0.5rem 0; background-color: var(--background-secondary); border-radius: 4px; }
+.content-main-input-row { display: flex; align-items: center; margin-bottom: 1rem; }
+.modifier-tags-container { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; padding-bottom: 1rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); }
+.modifier-tag { display: flex; align-items: center; background-color: var(--suggestion-hover-bg); border-radius: 4px; padding: 0.25rem 0.5rem; }
+.modifier-tag-label { color: var(--label-color); margin-right: 0.5rem; }
+.modifier-tag-input { background: none; border: none; border-bottom: 1px solid var(--label-color); color: var(--value-color); width: 50px; text-align: center; }
+.remove-modifier-btn { background: none; border: none; color: var(--label-color); cursor: pointer; margin-left: 0.5rem; }
+.add-modifier-container { position: relative; }
+.add-modifier-btn { background-color: transparent; border: 1px dashed var(--label-color); color: var(--label-color); border-radius: 50%; width: 24px; height: 24px; cursor: pointer; }
+.modifier-menu { position: absolute; top: 120%; left: 0; background-color: var(--background-secondary); border: 1px solid var(--border-color); border-radius: 4px; list-style: none; padding: 0.25rem; margin: 0; z-index: 30; }
+.modifier-menu li { padding: 0.5rem 1rem; cursor: pointer; border-radius: 3px; }
+.modifier-menu li:hover { background-color: var(--suggestion-hover-bg); }
+.done-editing-btn { display: none; }
+.autocomplete-container { position: relative; flex-grow: 1; }

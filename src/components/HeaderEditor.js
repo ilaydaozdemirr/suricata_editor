@@ -6,36 +6,38 @@ import suggestionsData from '../data/suggestionsData';
 import RuleInputBox from './RuleInputBox';
 import OptionsBuilder from './OptionsBuilder';
 
-const HeaderEditor = ({ session }) => {
-    const { updateHeaderData } = useRule();
+const HeaderEditor = () => {
+    const { activeEditorState, setActiveEditorState } = useRule();
+    const { headerData } = activeEditorState;
     
-    // DEĞİŞİKLİK: Artık her zaman header'dan başlamak için başlangıç değeri 'false' olarak ayarlandı.
     const [isHeaderComplete, setIsHeaderComplete] = useState(false);
     const [activeInput, setActiveInput] = useState(null);
 
     const editorRef = useRef(null);
     const inputRefs = useRef([]);
-    const labels = Object.keys(session.headerData);
-    
+    const labels = Object.keys(headerData);
+
+    // Yeni bir kural yüklendiğinde veya editör temizlendiğinde, header görünümüne geri dön.
+    useEffect(() => {
+        setIsHeaderComplete(false);
+    }, [activeEditorState.id]);
+
     const filteredSuggestions = useMemo(() => {
         if (!activeInput || !suggestionsData[activeInput]) return [];
-        const value = session.headerData[activeInput] || '';
+        const value = headerData[activeInput] || '';
         const allSuggestions = suggestionsData[activeInput];
         if (!value) return allSuggestions;
         return allSuggestions.filter(s => s.toLowerCase().startsWith(value.toLowerCase()));
-    }, [activeInput, session.headerData]);
+    }, [activeInput, headerData]);
 
     const handleChange = (label, value) => {
-        const newHeaderData = { ...session.headerData, [label]: value };
-        updateHeaderData(session.id, newHeaderData);
+        setActiveEditorState(prev => ({ ...prev, headerData: { ...prev.headerData, [label]: value }}));
     };
     
     const handleFocus = (label) => setActiveInput(label);
 
     const applySuggestion = (suggestion) => {
-        if (activeInput) {
-            handleChange(activeInput, suggestion);
-        }
+        if (activeInput) handleChange(activeInput, suggestion);
     };
 
     const moveToNextField = (currentIndex) => {
@@ -44,13 +46,6 @@ const HeaderEditor = ({ session }) => {
             setTimeout(() => inputRefs.current[nextIndex]?.focus(), 0);
         } else {
             setIsHeaderComplete(true);
-        }
-    };
-
-    const moveToPrevField = (currentIndex) => {
-        const prevIndex = currentIndex - 1;
-        if (prevIndex >= 0) {
-            inputRefs.current[prevIndex]?.focus();
         }
     };
 
@@ -70,64 +65,26 @@ const HeaderEditor = ({ session }) => {
 
             if (filteredSuggestions.length > 0 && currentValue !== firstSuggestion) {
                 applySuggestion(filteredSuggestions[0]);
-            } 
-            else {
+            } else {
                 moveToNextField(currentIndex);
             }
         }
-        
-        if (e.key === ' ') {
-            if (e.target.value.trim() !== '') {
-                e.preventDefault();
-                moveToNextField(currentIndex);
-            }
-        }
-        
-        if (e.key === 'Escape') {
+        if (e.key === ' ' && e.target.value.trim() !== '') {
             e.preventDefault();
-            moveToPrevField(currentIndex);
-        }
-
-        if (e.key === 'Backspace' && e.target.value === '') { 
-            e.preventDefault(); 
-            moveToPrevField(currentIndex);
+            moveToNextField(currentIndex);
         }
     };
     
-    useEffect(() => {
-        const handleClickOutside = (e) => { 
-            if (editorRef.current && !editorRef.current.contains(e.target)) { 
-                setActiveInput(null); 
-            } 
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-    
-    useEffect(() => {
-        const isNewRule = !session.ruleString;
-        if (!isHeaderComplete) {
-            if (isNewRule) {
-                inputRefs.current[0]?.focus();
-            } else {
-                const focusTimeout = setTimeout(() => {
-                    inputRefs.current[0]?.focus();
-                }, 500);
-                return () => clearTimeout(focusTimeout);
-            }
-        }
-    }, [isHeaderComplete, session.id, session.ruleString]);
-    
     if (isHeaderComplete) {
-        const finalHeaderString = labels.map(label => session.headerData[label]).join(' ');
+        const finalHeaderString = labels.map(label => headerData[label]).join(' ');
         return (
             <div className="options-view-container">
-                <pre className="final-header-text">{finalHeaderString} (</pre>
-                <OptionsBuilder 
-                    session={session}
-                    onNavigateBack={() => setIsHeaderComplete(false)}
-                />
-                <div className="final-header-text">)</div>
+                <div className="options-view-header">
+                    <pre className="final-header-text">{finalHeaderString} (</pre>
+                    <button className="back-to-header-btn" onClick={() => setIsHeaderComplete(false)}>&lt; Header'ı Düzenle</button>
+                </div>
+                <OptionsBuilder />
+                <pre className="final-header-text">)</pre>
             </div>
         );
     }
@@ -136,10 +93,10 @@ const HeaderEditor = ({ session }) => {
         <div className="editor-row" ref={editorRef}>
             {labels.map((label, index) => (
                 <RuleInputBox 
-                    key={session.id + label}
+                    key={label + activeEditorState.id} // ID'yi key'e ekleyerek yeniden render garantisi
                     ref={el => inputRefs.current[index] = el} 
                     label={label} 
-                    value={session.headerData[label]}
+                    value={headerData[label]}
                     onChange={e => handleChange(label, e.target.value)}
                     onFocus={() => handleFocus(label)} 
                     onKeyDown={e => handleKeyDown(e, index)} 
