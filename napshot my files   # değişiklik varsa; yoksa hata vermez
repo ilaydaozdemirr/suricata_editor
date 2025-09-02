@@ -1,0 +1,18 @@
+  backup/before-revert-a008b20          [m a008b20 Resolve merge conflicts by keeping feature/ilay versions to preserve our features
+  feature/ilay                          [m 241bd7d [[34mupstream/feature/ilay[m] Merge branch 'master' into feature/ilay
+  ide2                                  [m 036174d [[34mupstream/ide2[m: gone] top menu gorunum ve koyu acik mod geldi acik mod kendinde degil
+* [32milay                                  [m 2b464ca [[34morigin/ilay[m] WIP: prepare branch ilay
+  ilayda                                [m fdbe102 [[34morigin/ilayda[m: ahead 1, behind 5] feat: genel UX iyileştirmeleri (kural düzenleme, import, light tema)
+  merge-master                          [m 2b464ca [[34morigin/merge-master[m: ahead 1] WIP: prepare branch ilay
+  [31mremotes/origin/HEAD                   [m -> origin/master
+  [31mremotes/origin/feature/ilay           [m ebd73f0 chore: add .gitattributes
+  [31mremotes/origin/ide                    [m 0991e2c hatalar olsada genel hatlari ile calisan ide gorunumu
+  [31mremotes/origin/ide2                   [m 036174d top menu gorunum ve koyu acik mod geldi acik mod kendinde degil
+  [31mremotes/origin/ilay                   [m 2b464ca WIP: prepare branch ilay
+  [31mremotes/origin/ilayda                 [m 7c93289 Merge branch 'ide2' into ilayda
+  [31mremotes/origin/master                 [m 692e2ba content ici ; sorunu halledildi
+  [31mremotes/origin/merge-master           [m 62d04a0 Merge remote-tracking branch 'upstream/master' into merge-master
+  [31mremotes/upstream/HEAD                 [m -> upstream/master
+  [31mremotes/upstream/feature/ilay         [m 241bd7d Merge branch 'master' into feature/ilay
+  [31mremotes/upstream/master               [m d78d877 Merge branch 'master' of https://github.com/ihsanegunduzoglu/suricata_editor
+  [31mremotes/upstream/revert-4-feature/ilay[m 52ff980 Revert "Genel UX iyileştirmeleri (kural düzenleme, import, light tema)"
